@@ -3,19 +3,57 @@ import type {
     ItemPayload,
     AuthTokens,
 } from '../types';
+import { getAuthSession, setAuthSession, clearAuthSession } from './sessionStorage';
 import { isUnauthorized } from '../lib/errors';
 import { mockApi } from './mockApi';
 
+type SessionListener = (session: AuthTokens | null) => void;
+
 class ApiClient {
     // the session is the user's session data
-    private session: AuthTokens | null = null;
+    private session: AuthTokens | null = getAuthSession();
 
-    // if request already in progress, we use the same promise to avoid multiple requests
+    // listeners to notify when the session changes
+    private listeners = new Set<SessionListener>();
+
+    // promise to refresh the access token
     private refreshPromise: Promise<void> | null = null;
 
+    getSession(): AuthTokens | null {
+        // return a copy of the session to avoid mutating the original object
+        return this.session ? { ...this.session } : null;
+    }
+
+    private setSession(session: AuthTokens | null) {
+        this.session = session;
+        if (session) {
+            setAuthSession(session);
+        } else {
+            clearAuthSession();
+        }
+
+        // notify listeners about the session change
+        this.listeners.forEach((listener) => listener(session));
+    }
+
+    // subscribe to session changes
+    subscribe(listener: SessionListener) {
+        this.listeners.add(listener);
+
+        return () => {
+            this.listeners.delete(listener);
+        };
+    }
+
+    private handleRefreshFailure() {
+        this.setSession(null);
+        window.dispatchEvent(new CustomEvent('auth:expired'));
+    }
+
     private async refreshAccessToken(): Promise<void> {
+        const currentSession = this.getSession();
         // check if there is an active session
-        if (!this.session) {
+        if (!currentSession) {
             throw new Error('No active session');
         }
 
@@ -25,27 +63,30 @@ class ApiClient {
         if (!this.refreshPromise) {
             // create a new promise to refresh the access token
             this.refreshPromise = mockApi
-                .refreshAccessToken(this.session.sessionToken)
+                .refreshAccessToken(currentSession.sessionToken)
                 .then((session) => {
-                    if (!this.session) {
+                    const latestSession = this.getSession();
+                    if (!latestSession) {
                         return;
                     }
 
-                    this.session = {
-                        ...this.session,
+                    this.setSession({
+                        ...latestSession,
                         accessToken: session.accessToken,
                         accessExpiresAt: session.accessExpiresAt,
-                    };
+                    });
+                })
+                .catch((error) => {
+                    this.handleRefreshFailure();
+                    throw error;
                 })
                 .finally(() => {
                     this.refreshPromise = null;
                 });
         }
 
-        // return the promise to wait for the refresh to complete
+        // if request already in progress, we use the same promise to avoid multiple requests
         return this.refreshPromise;
-
-
     }
 
     // Generic helper function to add authentication to the request
@@ -55,12 +96,12 @@ class ApiClient {
         hasRetried = false,
     ): Promise<T> {
         // get 401 error and refresh the token
-        if (!this.session) {
+        if (!this.getSession()) {
             throw new Error('Not logged in');
         }
 
         try {
-            return request(this.session?.accessToken);
+            return request(this.getSession()?.accessToken);
         }
         catch (error) {
             // if the error is not a 401 or the request has been retried, throw the error
@@ -78,13 +119,13 @@ class ApiClient {
 
     async login(username: string, password: string): Promise<AuthTokens> {
         const session = await mockApi.login(username, password);
-        this.session = session;
+        this.setSession(session);
 
         return session;
     }
 
     async logout(): Promise<void> {
-        this.session = null;
+        this.setSession(null);
     }
 
     async getItems(): Promise<Item[]> {
