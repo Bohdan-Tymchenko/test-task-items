@@ -20,7 +20,7 @@ export const LoginPage = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    async function handleSubmit(event: SyntheticEvent<HTMLFormElement>) {
+    const handleSubmit = async (event: SyntheticEvent<HTMLFormElement>) => {
         event.preventDefault();
 
         try {
@@ -29,7 +29,7 @@ export const LoginPage = () => {
         } catch {
             // The slice stores the displayable error.
         }
-    }
+    };
 
     return (
         <Container maxWidth="sm">
@@ -42,7 +42,11 @@ export const LoginPage = () => {
                         name="username"
                         value={formData.username}
                         onChange={handleChange}
+                        autoComplete="username"
                         autoFocus
+                        disabled={isSubmitting}
+                        fullWidth
+                        required
                     />
                     <TextField
                         type="password"
@@ -51,9 +55,15 @@ export const LoginPage = () => {
                         name="password"
                         value={formData.password}
                         onChange={handleChange}
-                        autoComplete="current-password" />
-                    <Button variant="contained" type="submit" disabled={isSubmitting}>{isSubmitting ? 'Logging in...' : 'Login'}</Button>
-                    {error && <Typography color="error">{error}</Typography>}
+                        autoComplete="current-password"
+                        disabled={isSubmitting}
+                        fullWidth
+                        required
+                    />
+                    <Button variant="contained" type="submit" disabled={isSubmitting} fullWidth>
+                        {isSubmitting ? 'Logging in...' : 'Login'}
+                    </Button>
+                    {error && <Typography color="error" role="alert">{error}</Typography>}
                 </Stack>
             </Paper>
         </Container>

@@ -1,6 +1,8 @@
 import type {
     Item,
-    ItemPayload,
+    CreateItemPayload,
+    UpdateItemPayload,
+    UpdateItemsPayload,
     AuthTokens,
 } from '../types';
 import { isUnauthorized } from '../lib/errors';
@@ -126,15 +128,15 @@ class ApiClient {
         return this.withAuth((accessToken) => mockApi.getItems(accessToken));
     }
 
-    async createItem(payload: ItemPayload): Promise<Item> {
+    async createItem(payload: CreateItemPayload): Promise<Item> {
         return this.withAuth((accessToken) => mockApi.createItem(accessToken, payload));
     }
 
-    async updateItem(id: string, payload: ItemPayload): Promise<Item> {
+    async updateItem(id: string, payload: UpdateItemPayload): Promise<Item> {
         return this.withAuth((accessToken) => mockApi.updateItem(accessToken, id, payload));
     }
 
-    async updateItems(ids: string[], payload: ItemPayload): Promise<Item[]> {
+    async updateItems(ids: string[], payload: UpdateItemsPayload): Promise<Item[]> {
         return this.withAuth((accessToken) => mockApi.updateItems(accessToken, ids, payload));
     }
 

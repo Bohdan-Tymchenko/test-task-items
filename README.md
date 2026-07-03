@@ -9,6 +9,8 @@ npm install
 npm run dev
 ```
 
+Then open the local URL printed by Vite, usually `http://localhost:5173`.
+
 Build check:
 
 ```bash
@@ -37,8 +39,9 @@ Use the hardcoded mock credentials:
 - API client attaches the current access token to protected calls.
 - On `401`, the API client performs a single-flight refresh, retries the failed call once, and prevents retry loops.
 - On refresh failure, the client clears the session and emits an auth expiration event.
-- Items page includes search, selection, bulk delete, single delete, and inline edit.
+- Items page includes search, selection, bulk status update, bulk delete, single delete, and inline edit.
 - Inline edit uses controlled fields with select inputs for `status` and `priority`.
+- Row-level item mutations disable only the affected rows while they are saving.
 
 ## Architecture Notes
 

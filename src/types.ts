@@ -9,8 +9,20 @@ export type Item = {
     updatedAt: number;
 }
 
-export type ItemPayload = {
+export type CreateItemPayload = {
     name: string;
+    status?: ItemStatus;
+    priority?: ItemPriority;
+}
+
+export type UpdateItemPayload = {
+    name: string;
+    status: ItemStatus;
+    priority: ItemPriority;
+}
+
+export type UpdateItemsPayload = {
+    name?: string;
     status?: ItemStatus;
     priority?: ItemPriority;
 }

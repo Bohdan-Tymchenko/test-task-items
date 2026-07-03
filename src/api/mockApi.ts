@@ -1,5 +1,14 @@
 import { ApiError } from '../lib/errors';
-import type { Item, ItemStatus, ItemPriority, ItemPayload, AuthTokens, AuthAccessToken } from '../types';
+import type {
+    Item,
+    ItemStatus,
+    ItemPriority,
+    CreateItemPayload,
+    UpdateItemPayload,
+    UpdateItemsPayload,
+    AuthTokens,
+    AuthAccessToken,
+} from '../types';
 
 const ACCESS_TTL_MS = 30_000; // 30 seconds
 const SESSION_TTL_MS = 5 * 60_000; // 5 minutes
@@ -109,7 +118,7 @@ function validateSession(sessionToken?: string) {
 }
 
 // Support required verification item fileds by requirements
-function normalizePayload(payload: ItemPayload, existing?: Item): ItemPayload {
+function normalizePayload<T extends CreateItemPayload | UpdateItemPayload | UpdateItemsPayload>(payload: T, existing?: Item): T {
     const newName = payload.name ?? existing?.name;
     if (newName !== undefined) {
         const trimmed = newName.trim();
@@ -161,10 +170,10 @@ export const mockApi = {
         validateAccess(accessToken);
         randomFakeFailure();
 
-        return items;
+        return [...items];
     },
 
-    async createItem(accessToken: string | undefined, payload: ItemPayload): Promise<Item> {
+    async createItem(accessToken: string | undefined, payload: CreateItemPayload): Promise<Item> {
         await delay();
         validateAccess(accessToken);
         randomFakeFailure();
@@ -177,12 +186,12 @@ export const mockApi = {
             normalizedPayload.priority ?? 3,
         );
 
-        items.push(newItem);
+        items = [...items, newItem];
 
         return newItem;
     },
 
-    async updateItem(accessToken: string | undefined, id: string, payload: ItemPayload): Promise<Item> {
+    async updateItem(accessToken: string | undefined, id: string, payload: UpdateItemPayload): Promise<Item> {
         await delay();
         validateAccess(accessToken);
         randomFakeFailure();
@@ -204,7 +213,7 @@ export const mockApi = {
         return updatedItem;
     },
 
-    async updateItems(accessToken: string | undefined, ids: string[], payload: ItemPayload): Promise<Item[]> {
+    async updateItems(accessToken: string | undefined, ids: string[], payload: UpdateItemsPayload): Promise<Item[]> {
         await delay();
         validateAccess(accessToken);
         randomFakeFailure();
