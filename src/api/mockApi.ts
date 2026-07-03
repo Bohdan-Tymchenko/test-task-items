@@ -25,17 +25,20 @@ function createItem(name: string, status: ItemStatus, priority: ItemPriority) {
 }
 
 export let items: Item[] = [
-    createItem('Item 1', 'open', 1),
-    createItem('Item 2', 'in_progress', 2),
-    createItem('Item 3', 'done', 3),
+    createItem('A Item 1', 'open', 1),
+    createItem('B Item 2', 'in_progress', 2),
+    createItem('C Item 3', 'done', 3),
+    createItem('C Item 4', 'open', 4),
 ];
 
 // MOCKED TOKENS
 // In-memory storage for access tokens.
-const accessTokens = new Map<string, AccessRecord>(); // access token -> expires at
+// access token -> expires at
+const accessTokens = new Map<string, AccessRecord>();
 
 // In-memory storage for session tokens.
-const sessions = new Map<string, SessionRecord>(); // session token -> expires at
+// session token -> expires at
+const sessions = new Map<string, SessionRecord>();
 
 function createAccessToken(sessionToken: string) {
     const accessToken = `access_${crypto.randomUUID()}`;
@@ -64,7 +67,7 @@ async function delay() {
     return new Promise(resolve => setTimeout(resolve, duration));
 }
 
-async function randomFakeFailure() {
+function randomFakeFailure() {
     // 5% chance of failure
     if (Math.random() < 0.05) {
         throw new ApiError(500, 'Immitation failure');
@@ -153,7 +156,7 @@ export const mockApi = {
         return { accessToken, accessExpiresAt };
     },
 
-    async getItems(accessToken: string): Promise<Item[]> {
+    async getItems(accessToken: string | undefined): Promise<Item[]> {
         await delay();
         validateAccess(accessToken);
         randomFakeFailure();
@@ -161,7 +164,7 @@ export const mockApi = {
         return items;
     },
 
-    async createItem(accessToken: string, payload: ItemPayload): Promise<Item> {
+    async createItem(accessToken: string | undefined, payload: ItemPayload): Promise<Item> {
         await delay();
         validateAccess(accessToken);
         randomFakeFailure();

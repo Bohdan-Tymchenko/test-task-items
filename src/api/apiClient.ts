@@ -3,7 +3,6 @@ import type {
     ItemPayload,
     AuthTokens,
 } from '../types';
-import { getAuthSession, setAuthSession, clearAuthSession } from './sessionStorage';
 import { isUnauthorized } from '../lib/errors';
 import { mockApi } from './mockApi';
 
@@ -11,7 +10,7 @@ type SessionListener = (session: AuthTokens | null) => void;
 
 class ApiClient {
     // the session is the user's session data
-    private session: AuthTokens | null = getAuthSession();
+    private session: AuthTokens | null = null;
 
     // listeners to notify when the session changes
     private listeners = new Set<SessionListener>();
@@ -26,11 +25,6 @@ class ApiClient {
 
     private setSession(session: AuthTokens | null) {
         this.session = session;
-        if (session) {
-            setAuthSession(session);
-        } else {
-            clearAuthSession();
-        }
 
         // notify listeners about the session change
         this.listeners.forEach((listener) => listener(session));
@@ -101,7 +95,7 @@ class ApiClient {
         }
 
         try {
-            return request(this.getSession()?.accessToken);
+            return await request(this.getSession()?.accessToken);
         }
         catch (error) {
             // if the error is not a 401 or the request has been retried, throw the error
